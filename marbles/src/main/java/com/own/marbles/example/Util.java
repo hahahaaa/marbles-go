@@ -1,5 +1,6 @@
 package com.own.marbles.example;
 
+import org.hyperledger.fabric.protos.peer.Query;
 import org.hyperledger.fabric.sdk.*;
 import org.hyperledger.fabric.sdk.exception.InvalidArgumentException;
 import org.hyperledger.fabric.sdk.exception.ProposalException;
@@ -17,6 +18,7 @@ import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.List;
 import java.util.Properties;
 
 @Component
@@ -80,6 +82,13 @@ public class Util {
         }
     }
 
+    /**
+     * getPeer
+     */
+    public Peer getPeer(HFClient client) throws InvalidArgumentException {
+        Peer peer = client.newPeer("peer1", "grpc://127.0.0.1:7051");
+        return peer;
+    }
 
     /***
      * init the channel
@@ -88,11 +97,10 @@ public class Util {
      * @throws InvalidArgumentException
      * @throws TransactionException
      */
-    public Channel getChannel(HFClient client) throws InvalidArgumentException, TransactionException {
+    public Channel getChannel(HFClient client, Peer peer) throws InvalidArgumentException, TransactionException, ProposalException {
         // initialize channel
         // peer name and endpoint in fabcar network
-        Peer peer = client.newPeer("peer1", "grpc://127.0.0.1:7051");
-        // Peer peer = client.newPeer("peer1", "grpc://127.0.0.1:8051");
+//        Peer peer = client.newPeer("peer1", "grpc://127.0.0.1:7051");
 
         // eventhub name and endpoint in fabcar network
         //EventHub eventHub = client.newEventHub("eventhub01", "grpc://127.0.0.1:7053");

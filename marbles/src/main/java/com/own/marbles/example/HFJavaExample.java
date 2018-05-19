@@ -3,6 +3,7 @@ package com.own.marbles.example;
 
 import org.hyperledger.fabric.sdk.Channel;
 import org.hyperledger.fabric.sdk.HFClient;
+import org.hyperledger.fabric.sdk.Peer;
 import org.hyperledger.fabric_ca.sdk.HFCAClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +41,8 @@ public class HFJavaExample {
         client.setUserContext(admin);
 
         // get HFC channel using the client
-        Channel channel = util.getChannel(client);
+        Peer peer = util.getPeer(client);
+        Channel channel = util.getChannel(client, peer);
         log.info("Channel: " + channel.getName());
 
 

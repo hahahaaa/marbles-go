@@ -1,11 +1,9 @@
 package com.own.marbles.app;
 
 
-import com.own.marbles.example.HFJavaExample;
 import com.own.marbles.example.HFUser;
 import com.own.marbles.example.Util;
-import org.hyperledger.fabric.sdk.Channel;
-import org.hyperledger.fabric.sdk.HFClient;
+import org.hyperledger.fabric.sdk.*;
 import org.hyperledger.fabric_ca.sdk.HFCAClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.Collection;
 
 @RestController()
 @RequestMapping("/chaincode")
@@ -36,9 +35,25 @@ public class InstallChainCode {
         client.setUserContext(admin);
 
         // get HFC channel using the client
-        Channel channel = util.getChannel(client);
+        Peer peer = util.getPeer(client);
+        Channel channel = util.getChannel(client, peer);
         log.info("Channel: " + channel.getName());
 
+
+        String key = "str";
+        // 构建proposal
+        QueryByChaincodeRequest req = client.newQueryProposalRequest();
+        // 指定要调用的chaincode
+        ChaincodeID cid = ChaincodeID.newBuilder().setName("chaincode003").build();
+        req.setChaincodeID(cid);
+        req.setFcn("get");
+        req.setArgs(key);
+        System.out.println("Querying for " + key);
+        Collection<ProposalResponse> resps = channel.queryByChaincode(req);
+        for (ProposalResponse resp : resps) {
+            String payload = new String(resp.getChaincodeActionResponsePayload());
+            log.info("response: " + payload);
+        }
 
     }
 }
