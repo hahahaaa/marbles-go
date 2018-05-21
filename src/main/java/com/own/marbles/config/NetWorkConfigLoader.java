@@ -1,31 +1,38 @@
 package com.own.marbles.config;
 
+import com.own.marbles.config.model.SampleOrg;
+import com.own.marbles.config.model.SampleStore;
+import com.own.marbles.config.model.SampleUser;
 import org.hyperledger.fabric.sdk.HFClient;
 import org.hyperledger.fabric.sdk.NetworkConfig;
 import org.hyperledger.fabric.sdk.exception.InvalidArgumentException;
+import org.hyperledger.fabric.sdk.exception.NetworkConfigurationException;
 import org.hyperledger.fabric.sdk.security.CryptoSuite;
 import org.hyperledger.fabric_ca.sdk.HFCAClient;
-import org.hyperledger.fabric_ca.sdk.HFCAInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
-import javax.annotation.PostConstruct;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.Properties;
 
-@Component
+import static java.lang.String.format;
+
+@Configuration
 public class NetWorkConfigLoader {
     private static final Logger log = LoggerFactory.getLogger(NetWorkConfigLoader.class);
 
-    private NetworkConfig networkConfig;
+    private final HashMap<String, SampleOrg> sampleOrgs = new HashMap<>();
 
-    private static final TestConfig testConfig = new TestConfig();
 
-    @PostConstruct
-    public void init() throws Exception {
-
-        networkConfig = NetworkConfig.fromJsonFile(new File("src/main/fixture/network_configs/network-config.json"));
+    @Bean
+    public NetworkConfig networkConfig() throws Exception {
+        TestConfig testConfig = new TestConfig();
+        NetworkConfig networkConfig = NetworkConfig.fromJsonFile(new File("src/main/fixture/network_configs/network-config.json"));
         networkConfig.getOrdererNames().forEach(ordererName -> {
             try {
                 Properties ordererProperties = networkConfig.getOrdererProperties(ordererName);
@@ -64,50 +71,83 @@ public class NetWorkConfigLoader {
                 throw new RuntimeException(e);
             }
         });
+        for (NetworkConfig.OrgInfo orgInfo : networkConfig.getOrganizationInfos()) {
+            SampleOrg sampleOrg = new SampleOrg(orgInfo.getName(), orgInfo.getMspId());
 
-        //Check if we get access to defined CAs!
-        NetworkConfig.OrgInfo org = networkConfig.getOrganizationInfo("Org1");
-        NetworkConfig.CAInfo caInfo = org.getCertificateAuthorities().get(0);
+            HFClient client = HFClient.createNewInstance();
+            client.setCryptoSuite(CryptoSuite.Factory.getCryptoSuite());
+            sampleOrg.setClient(client);
 
-        HFCAClient hfcaClient = HFCAClient.createNewInstance(caInfo);
+            HFCAClient hfcaClient = HFCAClient.createNewInstance(orgInfo.getCertificateAuthorities().get(0));
+            sampleOrg.setCAClient(hfcaClient);
 
-        log.info(hfcaClient.getCAName());
-        log.info(caInfo.getCAName());
+            SampleStore sampleStore = setSampleStore(sampleOrg);
 
-        HFCAInfo info = hfcaClient.info(); //makes actual REST call.
-        log.info(caInfo.getCAName());
-        log.info(info.getCAName());
+            SampleUser peerOrgAdmin = sampleStore.getMember(
+                    orgInfo.getName() + "Admin",
+                    orgInfo.getName(),
+                    sampleOrg.getMSPID(),
+                    findFileSk(Paths.get(pathPrefix, adminKeyPath).toFile()),
+                    Paths.get(pathPrefix, adminCertPath,
+                            format("/Admin@%s-cert.pem", sampleOrgDomainName))
+                            .toFile());
 
-//        Collection<NetworkConfig.UserInfo> registrars = caInfo.getRegistrars();
-//        assertTrue(!registrars.isEmpty());
-//        NetworkConfig.UserInfo registrar = registrars.iterator().next();
-//        registrar.setEnrollment(hfcaClient.enroll(registrar.getName(), registrar.getEnrollSecret()));
-//        MockUser mockuser = getMockUser(org.getName() + "_mock_" + System.nanoTime(), registrar.getMspId());
-//        RegistrationRequest rr = new RegistrationRequest(mockuser.getName(), "org1.department1");
-//        mockuser.setEnrollmentSecret(hfcaClient.register(rr, registrar));
-//        mockuser.setEnrollment(hfcaClient.enroll(mockuser.getName(), mockuser.getEnrollmentSecret()));
-//        orgRegisteredUsers.put(org.getName(), mockuser);
-//
-//        org = networkConfig.getOrganizationInfo("Org2");
-//        caInfo = org.getCertificateAuthorities().get(0);
-//
-//        hfcaClient = HFCAClient.createNewInstance(caInfo);
-//        assertEquals(hfcaClient.getCAName(), caInfo.getCAName());
-//        info = hfcaClient.info(); //makes actual REST call.
-//        assertEquals(info.getCAName(), "");
-//
-//        registrars = caInfo.getRegistrars();
-//        assertTrue(!registrars.isEmpty());
-//        registrar = registrars.iterator().next();
-//        registrar.setEnrollment(hfcaClient.enroll(registrar.getName(), registrar.getEnrollSecret()));
-//        mockuser = getMockUser(org.getName() + "_mock_" + System.nanoTime(), registrar.getMspId());
-//        rr = new RegistrationRequest(mockuser.getName(), "org1.department1");
-//        mockuser.setEnrollmentSecret(hfcaClient.register(rr, registrar));
-//        mockuser.setEnrollment(hfcaClient.enroll(mockuser.getName(), mockuser.getEnrollmentSecret()));
-//        orgRegisteredUsers.put(org.getName(), mockuser);
-//
-//        deployChaincodeIfRequired();
+            sampleOrg.setPeerAdmin(peerOrgAdmin);
+
+            //TODO:  SampleUser admin 和 orgInfo.getPeerAdmin()的区别
+            SampleUser admin = sampleStore.getMember("admin", "org1");
+            if (!admin.isEnrolled()) {  //Preregistered admin only needs to be enrolled with Fabric caClient.
+                admin.setEnrollment(hfcaClient.enroll(admin.getName(), "adminpw"));
+                admin.setMspId(orgInfo.getMspId());
+            }
+            sampleOrg.setAdmin(admin);
+
+            sampleOrgs.put(orgInfo.getName(), sampleOrg);
+
+        }
+
+        return networkConfig;
     }
+
+    public SampleStore setSampleStore(SampleOrg sampleOrg) {
+        // Persistence is not part of SDK. Sample file store is for
+        // demonstration purposes only!
+        // MUST be replaced with more robust application implementation
+        // (Database, LDAP)
+
+        File sampleStoreFile = new File(System.getProperty("java.io.tmpdir")
+                + "/HFCSampletest" + sampleOrg.getName() + ".properties");
+        if (sampleStoreFile.exists()) { // For testing start fresh
+            //	sampleStoreFile.delete();
+        }
+
+        SampleStore sampleStore = new SampleStore(sampleStoreFile);
+        sampleOrg.setSampleStore(sampleStore);
+
+        return sampleStore;
+    }
+
+    private static File findFileSk(File directory) {
+
+        File[] matches = directory.listFiles((dir, name) -> name
+                .endsWith("_sk"));
+
+        if (null == matches) {
+            throw new RuntimeException(format(
+                    "Matches returned null does %s directory exist?", directory
+                            .getAbsoluteFile().getName()));
+        }
+
+        if (matches.length != 1) {
+            throw new RuntimeException(format(
+                    "Expected in %s only 1 sk file but found %d", directory
+                            .getAbsoluteFile().getName(), matches.length));
+        }
+
+        return matches[0];
+
+    }
+
 
 
 }

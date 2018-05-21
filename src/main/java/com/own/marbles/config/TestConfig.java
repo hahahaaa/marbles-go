@@ -34,7 +34,6 @@ import java.util.Properties;
 public class TestConfig {
 
 
-
     public Properties getEndPointProperties(final String type, final String name) {
         Properties ret = new Properties();
 
@@ -82,7 +81,6 @@ public class TestConfig {
     }
 
 
-
     public String getTestChannelPath() {
 
         return "src/main/fixture/e2e-2Orgs/";
@@ -94,6 +92,7 @@ public class TestConfig {
         return "IntegrationSuiteV1.java".equals(System.getProperty("org.hyperledger.fabric.sdktest.ITSuite"));
 
     }
+
     private String getDomainName(final String name) {
         int dot = name.indexOf(".");
         if (-1 == dot) {
