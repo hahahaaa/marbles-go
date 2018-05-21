@@ -1,7 +1,9 @@
 package com.own.marbles.config;
 
+import org.hyperledger.fabric.sdk.HFClient;
 import org.hyperledger.fabric.sdk.NetworkConfig;
 import org.hyperledger.fabric.sdk.exception.InvalidArgumentException;
+import org.hyperledger.fabric.sdk.security.CryptoSuite;
 import org.hyperledger.fabric_ca.sdk.HFCAClient;
 import org.hyperledger.fabric_ca.sdk.HFCAInfo;
 import org.slf4j.Logger;
@@ -68,6 +70,7 @@ public class NetWorkConfigLoader {
         NetworkConfig.CAInfo caInfo = org.getCertificateAuthorities().get(0);
 
         HFCAClient hfcaClient = HFCAClient.createNewInstance(caInfo);
+
         log.info(hfcaClient.getCAName());
         log.info(caInfo.getCAName());
 
