@@ -6,7 +6,6 @@ import com.own.marbles.config.model.SampleUser;
 import org.hyperledger.fabric.sdk.HFClient;
 import org.hyperledger.fabric.sdk.NetworkConfig;
 import org.hyperledger.fabric.sdk.exception.InvalidArgumentException;
-import org.hyperledger.fabric.sdk.exception.NetworkConfigurationException;
 import org.hyperledger.fabric.sdk.security.CryptoSuite;
 import org.hyperledger.fabric_ca.sdk.HFCAClient;
 import org.slf4j.Logger;
@@ -15,18 +14,23 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Properties;
-
-import static java.lang.String.format;
 
 @Configuration
 public class NetWorkConfigLoader {
     private static final Logger log = LoggerFactory.getLogger(NetWorkConfigLoader.class);
 
     private final HashMap<String, SampleOrg> sampleOrgs = new HashMap<>();
+
+    public HashMap<String, SampleOrg> getSampleOrgs() {
+        return sampleOrgs;
+    }
+
+    public SampleOrg getSampleOrg(String orgName) {
+        return sampleOrgs.get(orgName);
+    }
 
 
     @Bean
@@ -72,35 +76,37 @@ public class NetWorkConfigLoader {
             }
         });
         for (NetworkConfig.OrgInfo orgInfo : networkConfig.getOrganizationInfos()) {
+
             SampleOrg sampleOrg = new SampleOrg(orgInfo.getName(), orgInfo.getMspId());
 
             HFClient client = HFClient.createNewInstance();
             client.setCryptoSuite(CryptoSuite.Factory.getCryptoSuite());
+            //set Client
             sampleOrg.setClient(client);
 
-            HFCAClient hfcaClient = HFCAClient.createNewInstance(orgInfo.getCertificateAuthorities().get(0));
-            sampleOrg.setCAClient(hfcaClient);
-
-            SampleStore sampleStore = setSampleStore(sampleOrg);
-
-            SampleUser peerOrgAdmin = sampleStore.getMember(
-                    orgInfo.getName() + "Admin",
-                    orgInfo.getName(),
-                    sampleOrg.getMSPID(),
-                    findFileSk(Paths.get(pathPrefix, adminKeyPath).toFile()),
-                    Paths.get(pathPrefix, adminCertPath,
-                            format("/Admin@%s-cert.pem", sampleOrgDomainName))
-                            .toFile());
-
-            sampleOrg.setPeerAdmin(peerOrgAdmin);
-
-            //TODO:  SampleUser admin 和 orgInfo.getPeerAdmin()的区别
-            SampleUser admin = sampleStore.getMember("admin", "org1");
-            if (!admin.isEnrolled()) {  //Preregistered admin only needs to be enrolled with Fabric caClient.
-                admin.setEnrollment(hfcaClient.enroll(admin.getName(), "adminpw"));
-                admin.setMspId(orgInfo.getMspId());
+            List<NetworkConfig.CAInfo> caInfos = orgInfo.getCertificateAuthorities();
+            if (caInfos.size() == 0) {
+                continue;
             }
+            HFCAClient hfcaClient = HFCAClient.createNewInstance(caInfos.get(0));
+            //set CAClient
+            sampleOrg.setCAClient(hfcaClient);
+            //set sampleStore
+            SampleStore sampleStore = setSampleStore(sampleOrg);
+            //set PeerAdmin
+            sampleOrg.setPeerAdmin(new SampleUser(orgInfo.getPeerAdmin(), orgInfo, sampleStore));
+
+
+            NetworkConfig.UserInfo adminInfo = (NetworkConfig.UserInfo) caInfos.get(0).getRegistrars().toArray()[0];
+            SampleUser admin = sampleStore.getMember(adminInfo.getName(), orgInfo.getName());
+            if (!admin.isEnrolled()) {  //Preregistered admin only needs to be enrolled with Fabric caClient.
+                admin.setEnrollment(hfcaClient.enroll(admin.getName(), adminInfo.getEnrollSecret()));
+                admin.setMspId(orgInfo.getMspId());
+                admin.setEnrollmentSecret(adminInfo.getEnrollSecret());
+            }
+            //setAdmin
             sampleOrg.setAdmin(admin);
+
 
             sampleOrgs.put(orgInfo.getName(), sampleOrg);
 
@@ -115,10 +121,9 @@ public class NetWorkConfigLoader {
         // MUST be replaced with more robust application implementation
         // (Database, LDAP)
 
-        File sampleStoreFile = new File(System.getProperty("java.io.tmpdir")
-                + "/HFCSampletest" + sampleOrg.getName() + ".properties");
+        File sampleStoreFile = new File("src/main/fixture/HFCSampletest" + sampleOrg.getName() + ".properties");
         if (sampleStoreFile.exists()) { // For testing start fresh
-            //	sampleStoreFile.delete();
+//            sampleStoreFile.delete();
         }
 
         SampleStore sampleStore = new SampleStore(sampleStoreFile);
@@ -126,28 +131,6 @@ public class NetWorkConfigLoader {
 
         return sampleStore;
     }
-
-    private static File findFileSk(File directory) {
-
-        File[] matches = directory.listFiles((dir, name) -> name
-                .endsWith("_sk"));
-
-        if (null == matches) {
-            throw new RuntimeException(format(
-                    "Matches returned null does %s directory exist?", directory
-                            .getAbsoluteFile().getName()));
-        }
-
-        if (matches.length != 1) {
-            throw new RuntimeException(format(
-                    "Expected in %s only 1 sk file but found %d", directory
-                            .getAbsoluteFile().getName(), matches.length));
-        }
-
-        return matches[0];
-
-    }
-
 
 
 }

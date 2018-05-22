@@ -17,6 +17,7 @@ package com.own.marbles.config.model;
 import io.netty.util.internal.StringUtil;
 import org.bouncycastle.util.encoders.Hex;
 import org.hyperledger.fabric.sdk.Enrollment;
+import org.hyperledger.fabric.sdk.NetworkConfig;
 import org.hyperledger.fabric.sdk.User;
 
 import java.io.*;
@@ -24,6 +25,7 @@ import java.util.Set;
 
 public class SampleUser implements User, Serializable {
     private static final long serialVersionUID = 8077132186383604355L;
+
 
     private String name;
     private Set<String> roles;
@@ -49,6 +51,25 @@ public class SampleUser implements User, Serializable {
             restoreState();
         }
 
+    }
+
+    public SampleUser(NetworkConfig.UserInfo userInfo, NetworkConfig.OrgInfo orgInfo, SampleStore fs) {
+        this.name = userInfo.getName();
+        this.organization = orgInfo.getName();
+        this.roles = userInfo.getRoles();
+        this.account = userInfo.getAccount();
+        this.affiliation = userInfo.getAffiliation();
+        this.enrollmentSecret = userInfo.getEnrollSecret();
+        this.enrollment = new SampleStore.SampleStoreEnrollement(userInfo.getEnrollment().getKey(), userInfo.getEnrollment().getCert());
+
+        this.keyValStore = fs;
+        this.keyValStoreName = toKeyValStoreName(this.name, orgInfo.getName());
+        String memberStr = keyValStore.getValue(keyValStoreName);
+        if (null == memberStr) {
+            saveState();
+        } else {
+            restoreState();
+        }
     }
 
 
