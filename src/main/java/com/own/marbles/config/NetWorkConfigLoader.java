@@ -3,6 +3,7 @@ package com.own.marbles.config;
 import com.own.marbles.config.model.SampleOrg;
 import com.own.marbles.config.model.SampleStore;
 import com.own.marbles.config.model.SampleUser;
+import org.hyperledger.fabric.sdk.Channel;
 import org.hyperledger.fabric.sdk.HFClient;
 import org.hyperledger.fabric.sdk.NetworkConfig;
 import org.hyperledger.fabric.sdk.exception.InvalidArgumentException;
@@ -32,6 +33,11 @@ public class NetWorkConfigLoader {
         return sampleOrgs.get(orgName);
     }
 
+    private Channel channel;
+
+    public Channel getChannel() {
+        return channel;
+    }
 
     @Bean
     public NetworkConfig networkConfig() throws Exception {
@@ -70,9 +76,12 @@ public class NetWorkConfigLoader {
 
             HFClient client = HFClient.createNewInstance();
             client.setCryptoSuite(CryptoSuite.Factory.getCryptoSuite());
-//            client.setUserContext(sampleOrg.getAdmin());
+            client.setUserContext(sampleOrg.getPeerAdmin());
             //set Client
             sampleOrg.setClient(client);
+
+            channel = client.loadChannelFromConfig("mychannel", networkConfig);
+            channel.initialize();
 
             //setOrderProperties
 //            networkConfig.getOrdererNames().forEach(ordererName -> {

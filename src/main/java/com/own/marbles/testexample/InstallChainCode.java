@@ -12,7 +12,7 @@ import javax.annotation.Resource;
 import java.util.Collection;
 
 @RestController()
-@RequestMapping("/chaincode")
+@RequestMapping("/test")
 public class InstallChainCode {
     private static final Logger log = LoggerFactory.getLogger(InstallChainCode.class);
 

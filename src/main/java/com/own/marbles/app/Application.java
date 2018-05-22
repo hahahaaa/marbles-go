@@ -68,22 +68,22 @@ public class Application {
 
 
     //从配置文件中读取channel
-    @GetMapping(value = "channel")
-    public Object loadChannelFromConfig() throws Exception {
-
-        String orgName = "Org1";
-        SampleOrg sampleOrg = configLoader.getSampleOrg(orgName);
-        log.info(sampleOrg.getPeerNames() + "");
-
-        HFClient client = sampleOrg.getClient();
-        client.setUserContext(sampleOrg.getPeerAdmin());
-
-        Channel channel = client.loadChannelFromConfig("mychannel", networkConfig);
-        Peer peer = channel.getPeers().iterator().next();
-        log.info(peer.getName());
-
-        return peer.getName();
-    }
+//    @GetMapping(value = "channel")
+//    public Object loadChannelFromConfig() throws Exception {
+//
+//        String orgName = "Org1";
+//        SampleOrg sampleOrg = configLoader.getSampleOrg(orgName);
+//        log.info(sampleOrg.getPeerNames() + "");
+//
+//        HFClient client = sampleOrg.getClient();
+//        client.setUserContext(sampleOrg.getPeerAdmin());
+//
+//        Channel channel = client.loadChannelFromConfig("mychannel", networkConfig);
+//        Peer peer = channel.getPeers().iterator().next();
+//        log.info(peer.getName());
+//
+//        return peer.getName();
+//    }
 
     //手动创建channel 并且peer加入channel
 //    @GetMapping(value = "channel/create")
