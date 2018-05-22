@@ -1,6 +1,5 @@
-package com.own.marbles.example;
+package com.own.marbles.testexample;
 
-import org.hyperledger.fabric.protos.peer.Query;
 import org.hyperledger.fabric.sdk.*;
 import org.hyperledger.fabric.sdk.exception.InvalidArgumentException;
 import org.hyperledger.fabric.sdk.exception.ProposalException;
@@ -18,7 +17,6 @@ import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collection;
-import java.util.List;
 import java.util.Properties;
 
 @Component

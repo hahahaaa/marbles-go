@@ -1,4 +1,4 @@
-package com.own.marbles.example;
+package com.own.marbles.testexample;
 
 
 import org.hyperledger.fabric.sdk.Channel;
