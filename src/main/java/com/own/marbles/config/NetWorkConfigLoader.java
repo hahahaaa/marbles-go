@@ -35,54 +35,15 @@ public class NetWorkConfigLoader {
 
     @Bean
     public NetworkConfig networkConfig() throws Exception {
-        TestConfig testConfig = new TestConfig();
         NetworkConfig networkConfig = NetworkConfig.fromJsonFile(new File("src/main/fixture/network_configs/network-config.json"));
-        networkConfig.getOrdererNames().forEach(ordererName -> {
-            try {
-                Properties ordererProperties = networkConfig.getOrdererProperties(ordererName);
-                Properties testProp = testConfig.getEndPointProperties("orderer", ordererName);
-                ordererProperties.setProperty("clientCertFile", testProp.getProperty("clientCertFile"));
-                ordererProperties.setProperty("clientKeyFile", testProp.getProperty("clientKeyFile"));
-                networkConfig.setOrdererProperties(ordererName, ordererProperties);
 
-            } catch (InvalidArgumentException e) {
-                throw new RuntimeException(e);
-            }
-        });
+        TestConfig testConfig = new TestConfig();
 
-        networkConfig.getPeerNames().forEach(peerName -> {
-            try {
-                Properties peerProperties = networkConfig.getPeerProperties(peerName);
-                Properties testProp = testConfig.getEndPointProperties("peer", peerName);
-                peerProperties.setProperty("clientCertFile", testProp.getProperty("clientCertFile"));
-                peerProperties.setProperty("clientKeyFile", testProp.getProperty("clientKeyFile"));
-                networkConfig.setPeerProperties(peerName, peerProperties);
 
-            } catch (InvalidArgumentException e) {
-                throw new RuntimeException(e);
-            }
-        });
-
-        networkConfig.getEventHubNames().forEach(eventhubName -> {
-            try {
-                Properties eventHubsProperties = networkConfig.getEventHubsProperties(eventhubName);
-                Properties testProp = testConfig.getEndPointProperties("peer", eventhubName);
-                eventHubsProperties.setProperty("clientCertFile", testProp.getProperty("clientCertFile"));
-                eventHubsProperties.setProperty("clientKeyFile", testProp.getProperty("clientKeyFile"));
-                networkConfig.setEventHubProperties(eventhubName, eventHubsProperties);
-
-            } catch (InvalidArgumentException e) {
-                throw new RuntimeException(e);
-            }
-        });
         for (NetworkConfig.OrgInfo orgInfo : networkConfig.getOrganizationInfos()) {
 
             SampleOrg sampleOrg = new SampleOrg(orgInfo.getName(), orgInfo.getMspId());
 
-            HFClient client = HFClient.createNewInstance();
-            client.setCryptoSuite(CryptoSuite.Factory.getCryptoSuite());
-            //set Client
-            sampleOrg.setClient(client);
 
             List<NetworkConfig.CAInfo> caInfos = orgInfo.getCertificateAuthorities();
             if (caInfos.size() == 0) {
@@ -94,8 +55,8 @@ public class NetWorkConfigLoader {
             //set sampleStore
             SampleStore sampleStore = setSampleStore(sampleOrg);
             //set PeerAdmin
-            sampleOrg.setPeerAdmin(new SampleUser(orgInfo.getPeerAdmin(), orgInfo, sampleStore));
-
+            SampleUser peerAdmin = new SampleUser(orgInfo.getPeerAdmin(), orgInfo, sampleStore);
+            sampleOrg.setPeerAdmin(peerAdmin);
 
             NetworkConfig.UserInfo adminInfo = (NetworkConfig.UserInfo) caInfos.get(0).getRegistrars().toArray()[0];
             SampleUser admin = sampleStore.getMember(adminInfo.getName(), orgInfo.getName());
@@ -106,6 +67,55 @@ public class NetWorkConfigLoader {
             }
             //setAdmin
             sampleOrg.setAdmin(admin);
+
+            HFClient client = HFClient.createNewInstance();
+            client.setCryptoSuite(CryptoSuite.Factory.getCryptoSuite());
+//            client.setUserContext(sampleOrg.getAdmin());
+            //set Client
+            sampleOrg.setClient(client);
+
+            //setOrderProperties
+//            networkConfig.getOrdererNames().forEach(ordererName -> {
+//                try {
+//                    sampleOrg.addOrdererLocation(ordererName, "grpc://localhost:7050");
+//                    Properties ordererProperties = networkConfig.getOrdererProperties(ordererName);
+//                    Properties testProp = testConfig.getEndPointProperties("orderer", ordererName);
+//                    ordererProperties.setProperty("clientCertFile", testProp.getProperty("clientCertFile"));
+//                    ordererProperties.setProperty("clientKeyFile", testProp.getProperty("clientKeyFile"));
+//                    sampleOrg.setOrdererProperties(ordererName, ordererProperties);
+//                } catch (InvalidArgumentException e) {
+//                    e.printStackTrace();
+//                }
+//            });
+//
+//            //setPeerNamesProperties
+//            networkConfig.getPeerNames().forEach(peerName -> {
+//                try {
+//                    sampleOrg.addPeerLocation(peerName, "grpc://localhost:7051");
+//                    Properties peerProperties = networkConfig.getPeerProperties(peerName);
+//                    Properties testProp = testConfig.getEndPointProperties("peer", peerName);
+//                    peerProperties.setProperty("clientCertFile", testProp.getProperty("clientCertFile"));
+//                    peerProperties.setProperty("clientKeyFile", testProp.getProperty("clientKeyFile"));
+//                    sampleOrg.setPeerProperties(peerName, peerProperties);
+//
+//                } catch (InvalidArgumentException e) {
+//                    throw new RuntimeException(e);
+//                }
+//            });
+//
+//            //setEventHubProperties
+//            networkConfig.getEventHubNames().forEach(eventhubName -> {
+//                try {
+//                    Properties eventHubsProperties = networkConfig.getEventHubsProperties(eventhubName);
+//                    Properties testProp = testConfig.getEndPointProperties("peer", eventhubName);
+//                    eventHubsProperties.setProperty("clientCertFile", testProp.getProperty("clientCertFile"));
+//                    eventHubsProperties.setProperty("clientKeyFile", testProp.getProperty("clientKeyFile"));
+//                    sampleOrg.setEventHubsProperties(eventhubName, eventHubsProperties);
+//
+//                } catch (InvalidArgumentException e) {
+//                    throw new RuntimeException(e);
+//                }
+//            });
 
 
             sampleOrgs.put(orgInfo.getName(), sampleOrg);

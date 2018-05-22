@@ -22,9 +22,8 @@ import java.util.*;
 
 /**
  * Sample Organization Representation
- *
+ * <p>
  * Keeps track which resources are defined for the Organization it represents.
- *
  */
 public class SampleOrg {
     final String name;
@@ -52,6 +51,10 @@ public class SampleOrg {
     private String caName;
 
     SampleStore sampleStore;
+
+    private Map<String, Properties> ordererProperties = new HashMap<>();
+    private  Map<String, Properties> peerProperties = new HashMap<>();
+    private  Map<String, Properties> eventHubsProperties = new HashMap<>();
 
 
     public SampleOrg(String name, String mspid) {
@@ -131,6 +134,14 @@ public class SampleOrg {
         return caClient;
     }
 
+    public void setPeerProperties(String peerName, Properties peerProperties) {
+        this.peerProperties.put(peerName, peerProperties);
+    }
+
+    public Properties getPeerProperties(String peerName) {
+        return peerProperties.get(peerName);
+    }
+
     public void setCAClient(HFCAClient caClient) {
 
         this.caClient = caClient;
@@ -148,9 +159,21 @@ public class SampleOrg {
         return userMap.get(name);
     }
 
-    public Collection<String> getOrdererLocations() {
-        return Collections.unmodifiableCollection(ordererLocations.values());
+    public void setOrdererProperties(String ordererName, Properties orderProperties) {
+        this.ordererProperties.put(ordererName, orderProperties);
     }
+
+    public Properties getOrdererProperties(String ordererName) {
+        return ordererProperties.get(ordererName);
+    }
+    public void setEventHubsProperties(String eventHub, Properties orderProperties) {
+        this.ordererProperties.put(eventHub, orderProperties);
+    }
+
+    public Properties getEventHubsProperties(String eventHub) {
+        return ordererProperties.get(eventHub);
+    }
+
 
     public Collection<String> getEventHubLocations() {
         return Collections.unmodifiableCollection(eventHubLocations.values());

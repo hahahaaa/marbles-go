@@ -24,12 +24,6 @@
           "chaincodeQuery": true,
           "ledgerQuery": true,
           "eventSource": true
-        },
-        "peer0.org2.example.com": {
-          "endorsingPeer": true,
-          "chaincodeQuery": false,
-          "ledgerQuery": true,
-          "eventSource": false
         }
       },
       "chaincodes": [
@@ -42,8 +36,7 @@
     "Org1": {
       "mspid": "Org1MSP",
       "peers": [
-        "peer0.org1.example.com",
-        "peer1.org1.example.com"
+        "peer0.org1.example.com"
       ],
       "certificateAuthorities": [
         "ca-org1"
@@ -64,7 +57,7 @@
   },
   "orderers": {
     "orderer.example.com": {
-      "url": "grpcs://localhost:7050",
+      "url": "grpc://localhost:7050",
       "grpcOptions": {
         "ssl-target-name-override": "orderer.example.com",
         "grpc-max-send-message-length": 15
@@ -76,8 +69,8 @@
   },
   "peers": {
     "peer0.org1.example.com": {
-      "url": "grpcs://localhost:7051",
-      "eventUrl": "grpcs://localhost:7053",
+      "url": "grpc://localhost:7051",
+      "eventUrl": "grpc://localhost:7053",
       "grpcOptions": {
         "ssl-target-name-override": "peer0.org1.example.com",
         "grpc.http2.keepalive_time": 15

@@ -33,14 +33,16 @@ public class SampleUser implements User, Serializable {
     private String affiliation;
     private String organization;
     private String enrollmentSecret;
+    private String mspId;
+
     Enrollment enrollment = null; //need access in test env.
 
     private transient SampleStore keyValStore;
     private String keyValStoreName;
 
+
     public SampleUser(String name, String org, SampleStore fs) {
         this.name = name;
-
         this.keyValStore = fs;
         this.organization = org;
         this.keyValStoreName = toKeyValStoreName(this.name, org);
@@ -61,6 +63,7 @@ public class SampleUser implements User, Serializable {
         this.affiliation = userInfo.getAffiliation();
         this.enrollmentSecret = userInfo.getEnrollSecret();
         this.enrollment = new SampleStore.SampleStoreEnrollement(userInfo.getEnrollment().getKey(), userInfo.getEnrollment().getCert());
+        this.mspId = userInfo.getMspId();
 
         this.keyValStore = fs;
         this.keyValStoreName = toKeyValStoreName(this.name, orgInfo.getName());
@@ -93,6 +96,7 @@ public class SampleUser implements User, Serializable {
         this.roles = roles;
         saveState();
     }
+
 
     @Override
     public String getAccount() {
@@ -220,7 +224,6 @@ public class SampleUser implements User, Serializable {
         return mspId;
     }
 
-    String mspId;
 
     public void setMspId(String mspID) {
         this.mspId = mspID;

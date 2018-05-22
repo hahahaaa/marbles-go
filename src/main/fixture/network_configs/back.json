@@ -1,64 +1,100 @@
 {
-  "networkName": "Docker Compose Network",
-  "x-networkId": "not-important",
+  "name": "global-trade-network",
   "x-type": "hlfv1",
-  "description": "Connection Profile for an Hyperledger Fabric network on a local machine",
+  "description": "The network to be in if you want to stay in the global trade business",
   "version": "1.0.0",
   "client": {
-    "organization": "Org1MSP",
+    "organization": "Org1",
     "credentialStore": {
-      "path": "/Users/cpf/Documents/go_work/src/github.com/hyperledger/fabric-samples/fabcar/hfc-key-store"
+      "path": "/tmp/hfc-kvs",
+      "cryptoStore": {
+        "path": "/tmp/hfc-cvs"
+      },
+      "wallet": "wallet-name"
     }
   },
   "channels": {
     "mychannel": {
       "orderers": [
-        "fabric-orderer"
+        "orderer.example.com"
       ],
       "peers": {
-        "fabric-peer-org1": {
-          "x-chaincode": {}
+        "peer0.org1.example.com": {
+          "endorsingPeer": true,
+          "chaincodeQuery": true,
+          "ledgerQuery": true,
+          "eventSource": true
         }
       },
       "chaincodes": [
-        "marbles:v4"
-      ],
-      "x-blockDelay": 10000
+        "example02:v1",
+        "marbles:1.0"
+      ]
     }
   },
   "organizations": {
-    "Org1MSP": {
+    "Org1": {
       "mspid": "Org1MSP",
       "peers": [
-        "fabric-peer-org1"
+        "peer0.org1.example.com",
+        "peer1.org1.example.com"
       ],
       "certificateAuthorities": [
-        "fabric-ca"
+        "ca-org1"
       ],
-      "x-adminCert": {
-        "path": "/Users/cpf/Documents/go_work/src/github.com/hyperledger/fabric-samples/basic-network/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/admincerts/Admin@org1.example.com-cert.pem"
+      "adminPrivateKey": {
+        "pem": "-----BEGIN PRIVATE KEY-----\nMIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQghnA7rdgbZi/wndusiXjyf0KgE6OKZjQ+5INjwelRAC6hRANCAASb3u+hY+U/FZvhYDN6d08HJ1v56UJUyz/n2NHyJgTg6kC05AaJMeGIinEF0JeJtRDNVQGzoQJQYjnzUTS9FvGh\n-----END PRIVATE KEY-----"
       },
-      "x-adminKeyStore": {
-        "path": "/Users/cpf/Documents/go_work/src/github.com/hyperledger/fabric-samples/basic-network/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/"
+      "signedCert": {
+        "path": "src/main/fixture/e2e-2Orgs/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/Admin@org1.example.com-cert.pem"
       }
+    },
+    "Org2": {
+      "mspid": "Org2MSP",
+      "peers": [
+        "peer0.org2.example.com"
+      ]
     }
   },
   "orderers": {
-    "fabric-orderer": {
-      "url": "grpc://localhost:7050"
+    "orderer.example.com": {
+      "url": "grpcs://localhost:7050",
+      "grpcOptions": {
+        "ssl-target-name-override": "orderer.example.com",
+        "grpc-max-send-message-length": 15
+      },
+      "tlsCACerts": {
+        "pem": "-----BEGIN CERTIFICATE----- <etc>"
+      }
     }
   },
   "peers": {
-    "fabric-peer-org1": {
-      "url": "grpc://localhost:7051",
-      "eventUrl": "grpc://localhost:7053"
+    "peer0.org1.example.com": {
+      "url": "grpcs://localhost:7051",
+      "eventUrl": "grpcs://localhost:7053",
+      "grpcOptions": {
+        "ssl-target-name-override": "peer0.org1.example.com",
+        "grpc.http2.keepalive_time": 15
+      },
+      "peer0.org2.example.com": {
+        "endorsingPeer": true,
+        "chaincodeQuery": false,
+        "ledgerQuery": true,
+        "eventSource": false
+      },
+      "tlsCACerts": {
+        "path": "src/main/fixture/e2e-2Orgs/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/server.crt"
+      }
     }
   },
   "certificateAuthorities": {
-    "fabric-ca": {
+    "ca-org1": {
       "url": "http://localhost:7054",
       "httpOptions": {
         "verify": true
+      },
+      "tlsCACerts": {
+        "path": "src/main/fixture/e2e-2Orgs/crypto-config/peerOrganizations/org1.example.com/ca/ca.org1.example.com-cert.pem"
       },
       "registrar": [
         {
@@ -66,7 +102,8 @@
           "enrollSecret": "adminpw"
         }
       ],
-      "caName": null
+      "caName": "ca.example.com"
     }
   }
 }
+
