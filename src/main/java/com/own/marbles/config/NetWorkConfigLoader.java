@@ -112,19 +112,20 @@ public class NetWorkConfigLoader {
 //                }
 //            });
 //
-//            //setEventHubProperties
-//            networkConfig.getEventHubNames().forEach(eventhubName -> {
-//                try {
-//                    Properties eventHubsProperties = networkConfig.getEventHubsProperties(eventhubName);
-//                    Properties testProp = testConfig.getEndPointProperties("peer", eventhubName);
-//                    eventHubsProperties.setProperty("clientCertFile", testProp.getProperty("clientCertFile"));
-//                    eventHubsProperties.setProperty("clientKeyFile", testProp.getProperty("clientKeyFile"));
+            //setEventHubProperties
+            networkConfig.getEventHubNames().forEach(eventhubName -> {
+                try {
+                    Properties eventHubsProperties = networkConfig.getEventHubsProperties(eventhubName);
+                    Properties testProp = testConfig.getEndPointProperties("peer", eventhubName);
+                    eventHubsProperties.setProperty("clientCertFile", testProp.getProperty("clientCertFile"));
+                    eventHubsProperties.setProperty("clientKeyFile", testProp.getProperty("clientKeyFile"));
 //                    sampleOrg.setEventHubsProperties(eventhubName, eventHubsProperties);
-//
-//                } catch (InvalidArgumentException e) {
-//                    throw new RuntimeException(e);
-//                }
-//            });
+                    networkConfig.setEventHubProperties(eventhubName, eventHubsProperties);
+
+                } catch (InvalidArgumentException e) {
+                    throw new RuntimeException(e);
+                }
+            });
 
 
             sampleOrgs.put(orgInfo.getName(), sampleOrg);

@@ -42,17 +42,11 @@
         "ca-org1"
       ],
       "adminPrivateKey": {
-        "pem": "-----BEGIN PRIVATE KEY-----\nMIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQghnA7rdgbZi/wndusiXjyf0KgE6OKZjQ+5INjwelRAC6hRANCAASb3u+hY+U/FZvhYDN6d08HJ1v56UJUyz/n2NHyJgTg6kC05AaJMeGIinEF0JeJtRDNVQGzoQJQYjnzUTS9FvGh\n-----END PRIVATE KEY-----"
+        "pem": "-----BEGIN PRIVATE KEY-----\nMIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgmfc/MT8sBQMhCEkz1YRqeTXuLhMSnrZyHkwkD2qcl6ahRANCAATh11QYPTpLQrneXBrTVUHYsQFqsvrYf9m/lWtotpNBGMdXV2F0wRDv0EZ1OeC093ux0yLoGhBhwxb2DOoEjE14\n-----END PRIVATE KEY-----"
       },
       "signedCert": {
         "path": "src/main/fixture/e2e-2Orgs/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/Admin@org1.example.com-cert.pem"
       }
-    },
-    "Org2": {
-      "mspid": "Org2MSP",
-      "peers": [
-        "peer0.org2.example.com"
-      ]
     }
   },
   "orderers": {
